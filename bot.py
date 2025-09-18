@@ -29,9 +29,29 @@ DATA_TENNIS_DIR   = os.path.join("data", "tennis")
 DATA_SOCCER_DIR   = os.path.join("data", "soccer")
 DATA_BASKET_DIR   = os.path.join("data", "basketball")
 
-TENNIS_SPORTS     = ["tennis_atp","tennis_wta"]
-SOCCER_SPORTS     = ["soccer_italy_serie_a","soccer_epl","soccer_spain_la_liga","soccer_germany_bundesliga","soccer_france_ligue_one"]
-BASKETBALL_SPORTS = ["basketball_nba"]
+# ========== SPORT DETECTION ==============
+SPORTS_AVAILABLE = []
+if ODDS_API_KEY:
+    try:
+        url = f"https://api.the-odds-api.com/v4/sports/?apiKey={ODDS_API_KEY}"
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        SPORTS_AVAILABLE = resp.json()
+    except Exception as e:
+        logging.error("Errore fetch lista sport: %s", e)
+        SPORTS_AVAILABLE = []
+
+def sports_with(keyword):
+    return [s["key"] for s in SPORTS_AVAILABLE if keyword in s["key"] and s.get("active")]
+
+# Usa le liste reali, filtrate
+TENNIS_SPORTS     = sports_with("tennis")
+SOCCER_SPORTS     = sports_with("soccer")
+BASKETBALL_SPORTS = sports_with("basketball")
+
+logging.info("Sport attivi trovati: Tennis=%s Soccer=%s Basket=%s",
+             TENNIS_SPORTS, SOCCER_SPORTS, BASKETBALL_SPORTS)
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 
